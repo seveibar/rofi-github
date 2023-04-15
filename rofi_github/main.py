@@ -6,6 +6,7 @@ import os
 import webbrowser
 import rofi_menu
 import sys
+import shelve
 
 log_file = "/tmp/rofi_github.log"
 
@@ -15,9 +16,17 @@ def debug_print(*args, **kwargs):
         print(*args, **kwargs, file=f)
 
 
-# Replace with your GitHub username and personal access token
 usernames = ["seveibar", "seamapi"]
 TOKEN = os.environ["GITHUB_TOKEN"]
+
+cache = shelve.open("github_rofi_settings")
+
+
+def get_cached_repos():
+    repos = cache.get("repos")
+    if repos is None:
+        return []
+    return repos
 
 
 def list_repos():
@@ -40,22 +49,27 @@ def list_repos():
                 raise Exception(
                     f"Failed to fetch repos for {username}: {response.status_code} - {response.text}"
                 )
+    cache["repos"] = all_repos
 
     return all_repos
 
 
-debug_print(list_repos())
+class UpdateRepoItem(rofi_menu.Item):
+    async def on_select(self, meta):
+        debug_print("updating repos")
+        list_repos()
+
 
 repo_items = [
     rofi_menu.ShellItem(repo["full_name"], f"echo {repo['name']}")
-    for repo in list_repos()
+    for repo in get_cached_repos()
 ]
 
 main_menu = rofi_menu.Menu(
     prompt="menu",
     items=[
-        rofi_menu.ShellItem("Set Github Token", "echo 'project 1'"),
-        rofi_menu.ShellItem("Refresh Repos", "echo 'project 1'")
+        UpdateRepoItem("Set Github Token"),
+        UpdateRepoItem("Refresh Repos"),
         # OutputSomeTextItem("Output anything"),
         # DoAndExitItem("Do something and exit"),
         # CurrentDatetimeItem(),
@@ -69,6 +83,4 @@ main_menu = rofi_menu.Menu(
 
 if __name__ == "__main__":
     rofi_menu.run(main_menu)
-# if __name__ == "__main__":
-#     menu = GitHubRepoSearchMenu()
-#     rofi_menu.run(menu, rofi_version="1.7")
+    cache.close()
