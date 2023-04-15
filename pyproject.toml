@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "rofi-github"
+version = "0.1.0"
+description = ""
+authors = ["seveibar <seveibar@gmail.com>"]
+readme = "README.md"
+packages = [{include = "rofi_github"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+rofi-menu = "^0.6"
+requests = "^2.28.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
